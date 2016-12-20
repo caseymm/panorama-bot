@@ -61,7 +61,7 @@ var mergeImages = function(tweet){
 		.mosaic()  // Merges the images as a matrix
 		.write('output.jpg', function (err) {
 				if (err) console.log(err);
-				twitter_image('You are here:', 'output.jpg', tweet);
+				twitter_image(tweet.place.full_name, 'output.jpg', tweet);
 		});
 }
 
