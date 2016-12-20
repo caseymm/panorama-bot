@@ -78,8 +78,8 @@ function BotInit() {
 		}
 	}
 
-	// BotMentions();
-	setInterval(BotMentions, 12*1000);
+	BotMentions();
+	setInterval(BotMentions, 60*1000);
 }
 
 /* BotRetweet() : To retweet the matching recent tweet */
@@ -94,7 +94,7 @@ function BotMentions() {
 	function BotGotReplies (error, data, response){
 		newReplies = _.filter(data, function(tweet){
 			var tweetTime = new Date(tweet.created_at).getTime() / 1000;
-			return tweetTime > seconds - 12;
+			return tweetTime > seconds - 60;
 		});
 		newReplies = _.pluck(newReplies, 'in_reply_to_status_id_str');
 	}
@@ -110,7 +110,7 @@ function BotMentions() {
 					tweet.geo = { 'coordinates': [placeCoords[1], placeCoords[0]] };
 				}
 				var tweetTime = new Date(tweet.created_at).getTime() / 1000;
-				return tweetTime > seconds - 12 && tweet.geo;
+				return tweetTime > seconds - 60 && tweet.geo;
 			});
 			for(var n = 0; n < newMentions.length; n++){
 				var tweet = data[n];
