@@ -37,10 +37,10 @@ var getImages = function(tweet){
 	};
 
 	var finished = [];
-	for(var i=0; i < 360; i+= 90){
-		download('https://maps.googleapis.com/maps/api/streetview?size=640x640&location='+tweet.geo.coordinates[0]+','+tweet.geo.coordinates[1]+'&heading='+i+'&pitch=0&key=AIzaSyAtSGmdpF9-vYFhfnSpxrBupcmy7dlfCyc', 'google-'+i+'.jpg', function(){
-			finished.push('google-'+i+'.jpg');
-			if(finished.length === 4){
+	for(var x=0; x < 360; x+= 30){
+		download('https://maps.googleapis.com/maps/api/streetview?size=280x640&location='+tweet.geo.coordinates[0]+','+tweet.geo.coordinates[1]+'&fov=30&heading='+x+'&pitch=0&key=AIzaSyAtSGmdpF9-vYFhfnSpxrBupcmy7dlfCyc', 'google-'+x+'.jpg', function(){
+			finished.push('google-'+x+'.jpg');
+			if(finished.length === 12){
 				mergeImages(tweet);
 			}
 		});
@@ -48,17 +48,9 @@ var getImages = function(tweet){
 };
 
 var mergeImages = function(tweet){
-	gm()
-		.in('-page', '+0+0')  // Custom place for each of the images
-		.in('google-0.jpg')
-		.in('-page', '+640+0')
-		.in('google-90.jpg')
-		.in('-page', '+1280+0')
-		.in('google-180.jpg')
-		.in('-page', '+1920+0')
-		.in('google-270.jpg')
-		.minify()  // Halves the size, 512x512 -> 256x256
-		.mosaic()  // Merges the images as a matrix
+	gm('google-0.jpg')
+		.append('google-30.jpg', 'google-60.jpg', 'google-90.jpg', 'google-120.jpg', 'google-150.jpg', 'google-180.jpg', 'google-210.jpg', 'google-240.jpg', 'google-270.jpg', 'google-300.jpg', 'google-330.jpg', true)
+		.minify()  // Halves the size
 		.write('output.jpg', function (err) {
 				if (err) console.log(err);
 				twitter_image(tweet.place.full_name, 'output.jpg', tweet);
@@ -121,8 +113,6 @@ function BotMentions() {
 		}
 	}
 
-	/* Set an interval of 30 minutes (in microsecondes) */
-	// setInterval(BotMentions, 5*60*1000);
 }
 
 var twitter_image = function(message, file_name, tweet) {
