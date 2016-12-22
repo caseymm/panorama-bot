@@ -61,7 +61,7 @@ var twitter_image = function(message, file_name, tweet) {
 		  var mediaIdStr = data.media_id_string;
 		  var params = { status: '@'+tweet.user.screen_name +' '+ message, in_reply_to_status_id: tweet.id_str, media_ids: [mediaIdStr] };
 		  Bot.post('statuses/update', params, function (err, data, response) {
-		    // console.log(data);
+		    console.log(tweet.id_str+' finished');
 				rmDir('images/'+tweet.id_str);
 		  })
 		});
