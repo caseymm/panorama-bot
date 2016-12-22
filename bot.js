@@ -1,10 +1,3 @@
-/*!
- * Bot.js : A Twitter bot that can retweet in response to the tweets matching particluar keyword
- * Version 1.0.0
- * Created by Debashis Barman (http://www.debashisbarman.in)
- * License : http://creativecommons.org/licenses/by-sa/3.0
- */
-
 /* Configure the Twitter API */
 var TWITTER_CONSUMER_KEY = 'Cf4kNj9m8cEafzl8DUGDPo5Wi';
 var TWITTER_CONSUMER_SECRET = 'l5fC4FAYljF3oOqcx0ICeHV8UuPoDjsBSYwZHxEFDkr9yXfjQS';
@@ -29,17 +22,19 @@ console.log('The bot is running...');
 var getImages = function(tweet){
 	var download = function(uri, filename, callback){
 	  request.head(uri, function(err, res, body){
-	    console.log('content-type:', res.headers['content-type']);
-	    console.log('content-length:', res.headers['content-length']);
-
+	    // console.log('content-type:', res.headers['content-type']);
+	    // console.log('content-length:', res.headers['content-length']);
 	    request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
 	  });
 	};
 
+	fs.mkdir('images/'+tweet.id_str);
+
 	var finished = [];
 	for(var x=0; x < 360; x+= 30){
-		download('https://maps.googleapis.com/maps/api/streetview?size=280x640&location='+tweet.geo.coordinates[0]+','+tweet.geo.coordinates[1]+'&fov=30&heading='+x+'&pitch=0&key=AIzaSyAtSGmdpF9-vYFhfnSpxrBupcmy7dlfCyc', 'google-'+x+'.jpg', function(){
-			finished.push('google-'+x+'.jpg');
+		// console.log(tweet.id_str, x);
+		download('https://maps.googleapis.com/maps/api/streetview?size=280x640&location='+tweet.geo.coordinates[0]+','+tweet.geo.coordinates[1]+'&fov=30&heading='+x+'&pitch=0&key=AIzaSyAtSGmdpF9-vYFhfnSpxrBupcmy7dlfCyc', 'images/'+tweet.id_str+'/img-'+x+'.jpg', function(){
+			finished.push('img-'+x+'.jpg');
 			if(finished.length === 12){
 				mergeImages(tweet);
 			}
@@ -48,14 +43,46 @@ var getImages = function(tweet){
 };
 
 var mergeImages = function(tweet){
-	gm('google-0.jpg')
-		.append('google-30.jpg', 'google-60.jpg', 'google-90.jpg', 'google-120.jpg', 'google-150.jpg', 'google-180.jpg', 'google-210.jpg', 'google-240.jpg', 'google-270.jpg', 'google-300.jpg', 'google-330.jpg', true)
+	var path = 'images/'+tweet.id_str+'/';
+	gm(path+'img-0.jpg')
+		.append(path+'img-30.jpg', path+'img-60.jpg', path+'img-90.jpg', path+'img-120.jpg', path+'img-150.jpg', path+'img-180.jpg', path+'img-210.jpg', path+'img-240.jpg', path+'img-270.jpg', path+'img-300.jpg', path+'img-330.jpg', true)
 		.minify()  // Halves the size
-		.write('output.jpg', function (err) {
+		.write(path+'output.jpg', function (err) {
 				if (err) console.log(err);
-				twitter_image(tweet.place.full_name, 'output.jpg', tweet);
+				twitter_image(tweet.place.full_name, path+'output.jpg', tweet);
 		});
 }
+
+var twitter_image = function(message, file_name, tweet) {
+
+	fs.readFile(file_name, {encoding: 'base64'}, function(err, imageB64) {
+
+		Bot.post('media/upload', { media_data: imageB64 }, function (err, data, response) {
+		  var mediaIdStr = data.media_id_string;
+		  var params = { status: '@'+tweet.user.screen_name +' '+ message, in_reply_to_status_id: tweet.id_str, media_ids: [mediaIdStr] };
+		  Bot.post('statuses/update', params, function (err, data, response) {
+		    // console.log(data);
+				rmDir('images/'+tweet.id_str);
+		  })
+		});
+
+	});
+
+};
+
+var rmDir = function(dirPath) {
+      try { var files = fs.readdirSync(dirPath); }
+      catch(e) { return; }
+      if (files.length > 0)
+        for (var i = 0; i < files.length; i++) {
+          var filePath = dirPath + '/' + files[i];
+          if (fs.statSync(filePath).isFile())
+            fs.unlinkSync(filePath);
+          else
+            rmDir(filePath);
+        }
+      fs.rmdirSync(dirPath);
+    };
 
 /* BotInit() : To initiate the bot */
 function BotInit() {
@@ -114,24 +141,6 @@ function BotMentions() {
 	}
 
 }
-
-var twitter_image = function(message, file_name, tweet) {
-
-	fs.readFile(file_name, {encoding: 'base64'}, function(err, imageB64) {
-	 Bot.post('media/upload', { media_data: imageB64 }, function (err, data, response) {
-
-		  // now we can reference the media and post a tweet (media will attach to the tweet)
-		  var mediaIdStr = data.media_id_string;
-		  var params = { status: '@'+tweet.user.screen_name +' '+ message, in_reply_to_status_id: tweet.id_str, media_ids: [mediaIdStr] };
-
-		  Bot.post('statuses/update', params, function (err, data, response) {
-		    // console.log(data);
-		  })
-		});
-
-	});
-
-};
 
 /* Initiate the Bot */
 BotInit();
